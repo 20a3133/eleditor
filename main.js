@@ -6,7 +6,12 @@ const createWindow = () => {
         height: 400,
         title: 'マイアプリ',
     });
+
     mainWindow.loadFile('index.html');
 };
+
+app.once('ready', () => {
+    createWindow();
+});
 
 app.once('window-all-closed', () => app.quit());
