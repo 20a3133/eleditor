@@ -1,16 +1,29 @@
 <!DOCTYPE html>
 <html lang="ja">
-    <head>
-        <meta charset="UTF-8" />
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self'" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>マイアプリ</title>
-    </head>
-    <body>
-        <h1>Hello, world.</h1>
-        <button id="button">Open</button>
-        <p id="text"></p>
+  <head>
+    <meta charset="utf-8" />
+    <title>Electron Text Editor</title>
 
-        <script src="app.js"></script>
-    </body>
+    <!-- セキュリティーポリシーを指定。Aceライブラリがインラインスタイルを扱うため。
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline';"
+    /> -->
+
+    <link href="main.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.0/ace.js"></script>
+    <script defer src="renderer.js"></script>
+  </head>
+  <body>
+    <header class="header">
+      <button class="btn-primary" id="btnOpen">読み込む</button>
+      <button class="btn-primary" id="btnSave">保存する</button>
+    </header>
+    <!-- Aceエディター-->
+    <div id="editor" style="height: 600px"></div>
+    <script>
+        ace.edit("editor");
+    </script>
+    <footer class="footer"></footer>
+  </body>
 </html>

@@ -1,77 +1,139 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
-const { fs } = require("fs");
+// アプリケーション作成用のモジュールを読み込み
+const path = require("path");
+const fs = require("fs");
+const electron = require("electron");
+const app = electron.app;
+const { BrowserWindow, ipcMain, dialog } = electron;
 
-const createWindow = () => {
-    const mainWindow = new BrowserWindow({
-        width: 600,
-        height: 400,
-        title: 'マイアプリ',
+// メインウィンドウ
+let mainWindow;
+
+function createWindow() {
+    // メインウィンドウを作成します
+    mainWindow = new BrowserWindow({
+        width: 800,
+        height: 540,
+        icon: path.join(__dirname, "../assets/icon_pre.ico"),
         webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: false,
-            preload: __dirname + '/preload.js',
+        // preload.js を指定
+        preload: path.join(app.getAppPath(), "src/preload.js"),
         },
     });
 
-    ipcMain.handle('open-dialog', async (_e, _arg) => {
-        return dialog
-        // ファイル選択ダイアログを表示する
-        .showOpenDialog(mainWindow, {
-            properties: ['openFile'],
-        })
-        .then((result) => {
-            // キャンセルボタンが押されたとき
-            if (result.canceled) return '';
-            // 選択されたファイルの絶対パスを返す
-            return result.filePaths[0];
-        })
-        .catch((err) => console.error(err));
+    // メインウィンドウに表示するURLを指定します
+    // （今回はmain.jsと同じディレクトリのindex.html）
+    mainWindow.loadFile("src/index.html");
+
+    // デベロッパーツールの起動
+    //mainWindow.webContents.openDevTools();
+
+    // メインウィンドウが閉じられたときの処理
+    mainWindow.on("closed", () => {
+        mainWindow = null;
     });
-    
-    //メニューバー内容
-    let template = [{
-        label: 'Your-App',
-        submenu: [{
-            label: 'アプリを終了',
-            accelerator: 'Cmd+Q',
-            click: function(){
-                app.quit();
-            }
-        }]
-    }, {
-        label: 'Window',
-        submenu: [{
-            label: '最小化',
-            accelerator: 'Cmd+M',
-            click: function(){
-                mainWindow.minimize();
-            }
-        }, {
-            label: '最大化',
-            accelerator: 'Cmd+Ctrl+F',
-            click: function(){
-                mainWindow.maximize();
-            }
-        }, {
-            type: 'separator'
-        }, {
-            label: 'リロード',
-            accelerator: 'Cmd+R',
-            click: function(){
-                BrowserWindow.getFocusedWindow().reload();
-            }
-        }]
-    }]
+}
 
-    //メニューバー設置
-    const menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
+//  初期化が完了した時の処理
+app.on("ready", createWindow);
 
-    mainWindow.loadFile('src/index.html');
-};
-
-app.once('ready', () => {
-    createWindow();
+// 全てのウィンドウが閉じたときの処理
+app.on("window-all-closed", () => {
+    // macOSのとき以外はアプリを終了させます
+    if (process.platform !== "darwin") {
+        app.quit();
+    }
+});
+// アプリケーションがアクティブになった時の処理(Macだと、Dockがクリックされた時）
+app.on("activate", () => {
+    /// メインウィンドウが消えている場合は再度メインウィンドウを作成する
+    if (mainWindow === null) {
+        createWindow();
+    }
 });
 
-app.once('window-all-closed', () => app.quit());
+// レンダラープロセスとの連携
+ipcMain.handle("openFile", openFile);
+ipcMain.handle("saveFile", saveFile);
+
+/**
+ * 【メインプロセス】ファイルを開きます。
+ * @returns {Promise<null|{textData: string, filePath: string}>}
+ */
+async function openFile() {
+    console.log("openfile");
+    const win = BrowserWindow.getFocusedWindow();
+
+    const result = await dialog.showOpenDialog(
+        win,
+        // どんなダイアログを出すかを指定するプロパティ
+        {
+            properties: ["openFile"],
+            filters: [
+                {
+                name: "Documents",
+                // 読み込み可能な拡張子を指定
+                extensions: ["txt", "html", "md", "js", "ts"],
+                },
+            ],
+        }
+    );
+
+  // [ファイル選択]ダイアログが閉じられた後の処理
+  if (result.filePaths.length > 0) {
+    const filePath = result.filePaths[0];
+
+    // テキストファイルを読み込む
+    const textData = fs.readFileSync(filePath, "utf8");
+    // ファイルパスとテキストデータを返却
+    return {
+      filePath,
+      textData,
+    };
+  }
+  // ファイル選択ダイアログで何も選択しなかった場合は、nullを返しておく
+  return null;
+}
+
+/**
+ * 【メインプロセス】ファイルを保存します。
+ * @param event
+ * @param {string} currentPath 現在編集中のファイルのパス
+ * @param {string} textData テキストデータ
+ * @returns {Promise<{filePath: string} | void>} 保存したファイルのパス
+ */
+async function saveFile(event, currentPath, textData) {
+    console.log("savefile");
+    let saveFilePath;
+
+    //　初期の入力エリアに設定されたテキストを保存しようとしたときは新規ファイルを作成する
+    if (currentPath) {
+        saveFilePath = currentPath;
+    } else {
+        const win = BrowserWindow.getFocusedWindow();
+        // 新規ファイル保存の場合はダイアログをだし、ファイル名をユーザーに決定してもらう
+        const result = await dialog.showSaveDialog(
+            win,
+            // どんなダイアログを出すかを指定するプロパティ
+            {
+                properties: ["openFile"],
+                filters: [
+                {
+                    name: "Documents",
+                    extensions: ["txt", "html", "md", "js", "ts"],
+                },
+                ],
+            }
+        );
+        // キャンセルした場合
+        if (result.canceled) {
+            // 処理を中断
+            return;
+        }
+        saveFilePath = result.filePath;
+    }
+
+    // ファイルを保存
+    fs.writeFileSync(saveFilePath, textData);
+
+    return { filePath: saveFilePath };
+}
