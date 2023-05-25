@@ -17,7 +17,7 @@ npm start
 https://note.com/bistalink/n/n1a0ed74a4558  
 たぶん入門者が本当に知りたいことだけをまとめたElectron入門  
 https://qiita.com/tomomoss/items/2b4112d6e22065c8615b  
-lectronで1からデスクトップアプリを作り、electron-builderを使ってビルド・リリースするまで  
+Electronで1からデスクトップアプリを作り、electron-builderを使ってビルド・リリースするまで  
 https://qiita.com/saki-engineering/items/203892838e15b3dbd300  
 Electron入門 - ファイル保存可能なテキストエディターを自作しよう  
 https://ics.media/entry/8401/  
