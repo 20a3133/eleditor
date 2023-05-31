@@ -77,21 +77,19 @@ async function openFile() {
             ],
         }
     );
-
-  // [ファイル選択]ダイアログが閉じられた後の処理
-  if (result.filePaths.length > 0) {
-    const filePath = result.filePaths[0];
-
-    // テキストファイルを読み込む
-    const textData = fs.readFileSync(filePath, "utf8");
-    // ファイルパスとテキストデータを返却
-    return {
-      filePath,
-      textData,
-    };
-  }
-  // ファイル選択ダイアログで何も選択しなかった場合は、nullを返しておく
-  return null;
+    // [ファイル選択]ダイアログが閉じられた後の処理
+    if (result.filePaths.length > 0) {
+        const filePath = result.filePaths[0];
+        // テキストファイルを読み込む
+        const textData = fs.readFileSync(filePath, "utf8");
+        // ファイルパスとテキストデータを返却
+        return {
+            filePath,
+            textData,
+        };
+    }
+    // ファイル選択ダイアログで何も選択しなかった場合は、nullを返しておく
+    return null;
 }
 
 /**
