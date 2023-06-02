@@ -40,7 +40,7 @@
   }
   
   .btn-primary {
-    -webkit-appearance: button;
+    appearance: button;
     color: #fff;
     background-color: #007bff;
     border-color: #007bff;
